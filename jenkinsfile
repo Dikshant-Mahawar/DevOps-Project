@@ -1,0 +1,89 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials-id'
+        DOCKERHUB_USER = 'harsh4710'
+        BACKEND_IMAGE = 'harsh4710/genai-backend'
+        FRONTEND_IMAGE = 'harsh4710/genai-frontend'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-credentials-id',
+                    url: 'https://github.com/Dikshant-Mahawar/DevOps-Project.git'
+            }
+        }
+
+        stage('Build Backend Docker Image') {
+            steps {
+                script {
+                    sh """
+                    cd backend
+                    docker build -t ${BACKEND_IMAGE}:latest .
+                    """
+                }
+            }
+        }
+
+        stage('Build Frontend Docker Image') {
+            steps {
+                script {
+                    sh """
+                    cd frontend
+                    docker build -t ${FRONTEND_IMAGE}:latest .
+                    """
+                }
+            }
+        }
+
+        stage('Login to DockerHub') {
+            steps {
+                script {
+                    sh """
+                    echo "Logging into DockerHub..."
+                    echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u ${DOCKERHUB_USER} --password-stdin
+                    """
+                }
+            }
+            environment {
+                DOCKERHUB_CREDENTIALS_USR = credentials('dockerhub-credentials-id').username
+                DOCKERHUB_CREDENTIALS_PSW = credentials('dockerhub-credentials-id').password
+            }
+        }
+
+        stage('Push Images to DockerHub') {
+            steps {
+                script {
+                    sh """
+                    docker push ${BACKEND_IMAGE}:latest
+                    docker push ${FRONTEND_IMAGE}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Run Ansible Deployment') {
+            steps {
+                script {
+                    sh """
+                    cd ansible
+                    ansible-playbook -i inventory deploy.yaml
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment complete! Application updated via Kubernetes."
+        }
+        failure {
+            echo "Pipeline failed. Check logs!"
+        }
+    }
+}
