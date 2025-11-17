@@ -1,8 +1,10 @@
 import streamlit as st
 import requests
 from streamlit_autorefresh import st_autorefresh
+import os
 
-BACKEND_URL = "http://127.0.0.1:8000"
+# Allows working both in docker-compose & locally
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="Salon AI Assistant 💇‍♀️", page_icon="💬")
 st.title("💇‍♀️ Salon AI Receptionist Chat")
@@ -24,7 +26,6 @@ try:
         data = check_resp.json()
         if data.get("status") == "resolved_from_supervisor":
             ai_reply = f"✅ Supervisor confirmed: {data['answer']}"
-            # Avoid duplicate replies
             if ("assistant", ai_reply) not in st.session_state.chat_history:
                 st.session_state.chat_history.append(("assistant", ai_reply))
 except Exception as e:

@@ -1,0 +1,9 @@
+---
+- hosts: dev
+  become: true
+
+  vars:
+    dockerhub_user: "harsh4710"
+
+  roles:
+    - deploy

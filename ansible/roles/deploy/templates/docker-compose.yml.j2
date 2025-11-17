@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  backend:
+    image: {{ dockerhub_user }}/salon-backend:latest
+    container_name: salon-backend
+    ports:
+      - "8000:8000"
+    restart: always
+
+  frontend:
+    image: {{ dockerhub_user }}/salon-frontend:latest
+    container_name: salon-frontend
+    ports:
+      - "3000:8501"
+    restart: always

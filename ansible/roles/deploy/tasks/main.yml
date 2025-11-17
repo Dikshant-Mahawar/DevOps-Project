@@ -1,0 +1,15 @@
+---
+- name: Copy docker-compose to server
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ ansible_env.HOME }}/docker-compose.yml"
+
+- name: Pull latest images from DockerHub
+  shell: |
+    docker pull {{ dockerhub_user }}/salon-backend:latest
+    docker pull {{ dockerhub_user }}/salon-frontend:latest
+
+- name: Run docker-compose
+  shell: |
+    cd {{ ansible_env.HOME }}
+    docker compose -f docker-compose.yml up -d

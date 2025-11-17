@@ -2,7 +2,8 @@ import streamlit as st
 import requests
 from streamlit_autorefresh import st_autorefresh
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://backend:8000"
+
 
 st.set_page_config(page_title="Supervisor Dashboard", layout="wide")
 st.title("💼 Salon AI Supervisor Dashboard")
