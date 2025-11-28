@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: salon-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: salon-backend
+  template:
+    metadata:
+      labels:
+        app: salon-backend
+    spec:
+      containers:
+        - name: backend
+          image: dikshant012/salon-backend:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OLLAMA_URL
+              value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"
+            - name: OLLAMA_USER
+              value: "admin"
+            - name: OLLAMA_PASS
+              value: "SuperSafe123"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: NodePort
+  selector:
+    app: salon-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30799
