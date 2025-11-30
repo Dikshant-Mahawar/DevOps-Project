@@ -5,9 +5,13 @@ pipeline {
         DOCKERHUB_CREDENTIALS = 'dockerhub-credentials-id'
         GITHUB_CREDENTIALS    = 'github-credentials-id'
         DOCKERHUB_USERNAME    = 'harsh4710'
+
+        // ⭐ Add Minikube kubeconfig path for Kubernetes access
+        KUBECONFIG = "/home/harsh-d/.kube/config"
     }
 
     stages {
+
         stage('Clone Repo') {
             steps {
                 checkout([$class: 'GitSCM',
@@ -20,32 +24,44 @@ pipeline {
             }
         }
 
-        stage('Build Backend Image') {
-            steps {
-                sh """
-                docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest -f backend/Dockerfile .
-                """
-            }
-        }
+        // stage('Build Backend Image') {
+        //     steps {
+        //         sh """
+        //         docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest -f backend/Dockerfile .
+        //         """
+        //     }
+        // }
 
-        stage('Build Frontend Image') {
-            steps {
-                sh """
-                docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest -f frontend/Dockerfile .
-                """
-            }
-        }
+        // stage('Build Frontend Image') {
+        //     steps {
+        //         sh """
+        //         docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest -f frontend/Dockerfile .
+        //         """
+        //     }
+        // }
 
-        stage('Push Images to DockerHub') {
+        // stage('Push Images to DockerHub') {
+        //     steps {
+        //         withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
+        //                 usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+        //             sh """
+        //             echo "$PASS" | docker login -u "$USER" --password-stdin
+        //             docker push ${env.DOCKERHUB_USERNAME}/salon-backend:latest
+        //             docker push ${env.DOCKERHUB_USERNAME}/salon-frontend:latest
+        //             """
+        //         }
+        //     }
+        // }
+
+        // ⭐ NEW Kubernetes deployment stage
+        stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
-                        usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                    echo "$PASS" | docker login -u "$USER" --password-stdin
-                    docker push ${env.DOCKERHUB_USERNAME}/salon-backend:latest
-                    docker push ${env.DOCKERHUB_USERNAME}/salon-frontend:latest
-                    """
-                }
+                echo "Applying Kubernetes manifests..."
+
+                sh """
+                kubectl apply -f k8s/backend-deployment.yaml
+                kubectl apply -f k8s/frontend-deployment.yaml
+                """
             }
         }
     }
