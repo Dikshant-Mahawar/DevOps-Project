@@ -20,7 +20,8 @@ spec:
             - containerPort: 8000
           env:
             - name: OLLAMA_URL
-              value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"
+              #value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"
+              value: "https://estrella-predependent-shiftingly.ngrok-free.dev/api/generate"
             - name: OLLAMA_USER
               value: "admin"
             - name: OLLAMA_PASS

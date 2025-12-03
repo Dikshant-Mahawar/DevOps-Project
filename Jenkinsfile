@@ -37,38 +37,34 @@ pipeline {
 
                 docker run --rm -i hadolint/hadolint < backend/Dockerfile  || true
                 docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
+                docker run --rm -i hadolint/hadolint < supervisor/Dockerfile || true
                 """
             }
         }
 
         /* ---------------------------------------------------------
-         * 3️⃣ Trivy — Config Scan (No Image Needed)
+         * 3️⃣ Trivy — Config Scan
          * --------------------------------------------------------- */
         stage('Security Scan - Trivy (Config Scan)') {
             steps {
                 sh """
                 echo '🔍 Running Trivy config scan on project...'
 
-                docker run --rm \
-                    -v ${env.WORKSPACE}:/project \
-                    aquasec/trivy:latest config /project/backend || true
-
-                docker run --rm \
-                    -v ${env.WORKSPACE}:/project \
-                    aquasec/trivy:latest config /project/frontend || true
+                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/backend   || true
+                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/frontend  || true
+                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/supervisor || true
                 """
             }
         }
 
         /* ---------------------------------------------------------
-         * 4️⃣ Bandit — Python Static Security Scan (SAST)
+         * 4️⃣ Bandit — Python SAST Security Scan
          * --------------------------------------------------------- */
         stage('Security Scan - Python Code (Bandit)') {
             steps {
                 sh """
                 echo '🔍 Running Bandit security scan on backend Python code...'
 
-                # Create virtual environment for Bandit
                 python3 -m venv bandit-venv
                 . bandit-venv/bin/activate
 
@@ -81,26 +77,22 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 5️⃣ Docker Build & Push — OPTIONAL (KEPT COMMENTED)
+         * 5️⃣ Docker Build & Push (Backend + Frontend) — OPTIONAL
          * --------------------------------------------------------- */
 
         // stage('Build Backend Image') {
         //     steps {
-        //         sh """
-        //         docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest -f backend/Dockerfile .
-        //         """
+        //         sh "docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest -f backend/Dockerfile ."
         //     }
         // }
 
         // stage('Build Frontend Image') {
         //     steps {
-        //         sh """
-        //         docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest -f frontend/Dockerfile .
-        //         """
+        //         sh "docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest -f frontend/Dockerfile ."
         //     }
         // }
 
-        // stage('Push Images to DockerHub') {
+        // stage('Push Backend + Frontend Images') {
         //     steps {
         //         withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
         //                 usernameVariable: 'USER', passwordVariable: 'PASS')]) {
@@ -114,15 +106,41 @@ pipeline {
         // }
 
         /* ---------------------------------------------------------
-         * 6️⃣ Kubernetes Deployment
+         * 6️⃣ Supervisor Dashboard — Build & Push
+         * --------------------------------------------------------- */
+        stage('Build Supervisor Image') {
+            steps {
+                sh """
+                echo '🛠 Building Supervisor Dashboard image...'
+                docker build -t ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest \
+                -f supervisor/Dockerfile supervisor/
+                """
+            }
+        }
+
+        stage('Push Supervisor Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
+                        usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh """
+                    echo "$PASS" | docker login -u "$USER" --password-stdin
+                    docker push ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest
+                    """
+                }
+            }
+        }
+
+        /* ---------------------------------------------------------
+         * 7️⃣ Kubernetes Deployment (Backend + Frontend + Supervisor)
          * --------------------------------------------------------- */
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                echo "🚀 Deploying application to Kubernetes..."
+                echo '🚀 Deploying application to Kubernetes...'
 
                 kubectl apply -f k8s/backend-deployment.yaml
                 kubectl apply -f k8s/frontend-deployment.yaml
+                kubectl apply -f k8s/supervisor-deployment.yaml
                 """
             }
         }
