@@ -24,6 +24,29 @@ pipeline {
             }
         }
 
+        // ⭐⭐⭐ DEVSECOPS SECTION ⭐⭐⭐
+        stage('Security Scan - Dockerfiles (Hadolint)') {
+            steps {
+                sh """
+                echo '🔍 Running Hadolint security scan on Dockerfiles...'
+
+                docker run --rm -i hadolint/hadolint < backend/Dockerfile || true
+                docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
+                """
+            }
+        }
+
+        stage('Security Scan - Python Code (Bandit)') {
+            steps {
+                sh """
+                echo '🔍 Running Bandit security scan on backend Python code...'
+                pip install bandit
+                bandit -r backend/ -ll || true
+                """
+            }
+        }
+
+        // ⭐⭐⭐ OPTIONAL — KEEP COMMENTED ⭐⭐⭐
         // stage('Build Backend Image') {
         //     steps {
         //         sh """
@@ -53,10 +76,10 @@ pipeline {
         //     }
         // }
 
-        // ⭐ NEW Kubernetes deployment stage
+        // ⭐ Kubernetes Deployment Stage
         stage('Deploy to Kubernetes') {
             steps {
-                echo "Applying Kubernetes manifests..."
+                echo "🚀 Applying Kubernetes manifests..."
 
                 sh """
                 kubectl apply -f k8s/backend-deployment.yaml
