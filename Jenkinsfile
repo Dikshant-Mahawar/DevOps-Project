@@ -47,14 +47,14 @@ pipeline {
         stage('Security Scan - Trivy (Config Scan)') {
             steps {
                 sh """
-                echo '🔍 Running Trivy config scan on project (fast & image-free)...'
+                echo '🔍 Running Trivy config scan on project...'
 
                 docker run --rm \
-                    -v $(pwd):/project \
+                    -v ${env.WORKSPACE}:/project \
                     aquasec/trivy:latest config /project/backend || true
 
                 docker run --rm \
-                    -v $(pwd):/project \
+                    -v ${env.WORKSPACE}:/project \
                     aquasec/trivy:latest config /project/frontend || true
                 """
             }
