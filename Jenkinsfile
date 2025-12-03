@@ -28,7 +28,7 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 2️⃣ DEVSECOPS — Dockerfile Linting (Hadolint)
+         * 2️⃣ Hadolint — Dockerfile Security Linting
          * --------------------------------------------------------- */
         stage('Security Scan - Dockerfiles (Hadolint)') {
             steps {
@@ -42,14 +42,33 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 3️⃣ DEVSECOPS — Python SAST (Bandit in Virtual Env)
+         * 3️⃣ Trivy — Config Scan (No Image Needed)
+         * --------------------------------------------------------- */
+        stage('Security Scan - Trivy (Config Scan)') {
+            steps {
+                sh """
+                echo '🔍 Running Trivy config scan on project (fast & image-free)...'
+
+                docker run --rm \
+                    -v $(pwd):/project \
+                    aquasec/trivy:latest config /project/backend || true
+
+                docker run --rm \
+                    -v $(pwd):/project \
+                    aquasec/trivy:latest config /project/frontend || true
+                """
+            }
+        }
+
+        /* ---------------------------------------------------------
+         * 4️⃣ Bandit — Python Static Security Scan (SAST)
          * --------------------------------------------------------- */
         stage('Security Scan - Python Code (Bandit)') {
             steps {
                 sh """
                 echo '🔍 Running Bandit security scan on backend Python code...'
 
-                # Create virtual environment (avoids system Python restriction)
+                # Create virtual environment for Bandit
                 python3 -m venv bandit-venv
                 . bandit-venv/bin/activate
 
@@ -62,7 +81,7 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 4️⃣ Docker Build & Push — COMMENTED OUT (Optional)
+         * 5️⃣ Docker Build & Push — OPTIONAL (KEPT COMMENTED)
          * --------------------------------------------------------- */
 
         // stage('Build Backend Image') {
@@ -95,13 +114,13 @@ pipeline {
         // }
 
         /* ---------------------------------------------------------
-         * 5️⃣ Kubernetes Deployment
+         * 6️⃣ Kubernetes Deployment
          * --------------------------------------------------------- */
         stage('Deploy to Kubernetes') {
             steps {
+                sh """
                 echo "🚀 Deploying application to Kubernetes..."
 
-                sh """
                 kubectl apply -f k8s/backend-deployment.yaml
                 kubectl apply -f k8s/frontend-deployment.yaml
                 """
