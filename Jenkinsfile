@@ -6,12 +6,15 @@ pipeline {
         GITHUB_CREDENTIALS    = 'github-credentials-id'
         DOCKERHUB_USERNAME    = 'harsh4710'
 
-        // ⭐ Add Minikube kubeconfig path for Kubernetes access
+        // kubeconfig for Minikube access
         KUBECONFIG = "/home/harsh-d/.kube/config"
     }
 
     stages {
 
+        /* ---------------------------------------------------------
+         * 1️⃣ Clone Repository
+         * --------------------------------------------------------- */
         stage('Clone Repo') {
             steps {
                 checkout([$class: 'GitSCM',
@@ -24,29 +27,44 @@ pipeline {
             }
         }
 
-        // ⭐⭐⭐ DEVSECOPS SECTION ⭐⭐⭐
+        /* ---------------------------------------------------------
+         * 2️⃣ DEVSECOPS — Dockerfile Linting (Hadolint)
+         * --------------------------------------------------------- */
         stage('Security Scan - Dockerfiles (Hadolint)') {
             steps {
                 sh """
                 echo '🔍 Running Hadolint security scan on Dockerfiles...'
 
-                docker run --rm -i hadolint/hadolint < backend/Dockerfile || true
+                docker run --rm -i hadolint/hadolint < backend/Dockerfile  || true
                 docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
                 """
             }
         }
 
+        /* ---------------------------------------------------------
+         * 3️⃣ DEVSECOPS — Python SAST (Bandit in Virtual Env)
+         * --------------------------------------------------------- */
         stage('Security Scan - Python Code (Bandit)') {
             steps {
                 sh """
                 echo '🔍 Running Bandit security scan on backend Python code...'
+
+                # Create virtual environment (avoids system Python restriction)
+                python3 -m venv bandit-venv
+                . bandit-venv/bin/activate
+
+                pip install --upgrade pip
                 pip install bandit
+
                 bandit -r backend/ -ll || true
                 """
             }
         }
 
-        // ⭐⭐⭐ OPTIONAL — KEEP COMMENTED ⭐⭐⭐
+        /* ---------------------------------------------------------
+         * 4️⃣ Docker Build & Push — COMMENTED OUT (Optional)
+         * --------------------------------------------------------- */
+
         // stage('Build Backend Image') {
         //     steps {
         //         sh """
@@ -76,10 +94,12 @@ pipeline {
         //     }
         // }
 
-        // ⭐ Kubernetes Deployment Stage
+        /* ---------------------------------------------------------
+         * 5️⃣ Kubernetes Deployment
+         * --------------------------------------------------------- */
         stage('Deploy to Kubernetes') {
             steps {
-                echo "🚀 Applying Kubernetes manifests..."
+                echo "🚀 Deploying application to Kubernetes..."
 
                 sh """
                 kubectl apply -f k8s/backend-deployment.yaml
