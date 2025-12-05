@@ -19,13 +19,28 @@ spec:
           ports:
             - containerPort: 8000
           env:
+
+            #value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"
+            #value: "https://estrella-predependent-shiftingly.ngrok-free.dev/api/generate"
+            #value: "http://ollama-service:11434/api/generate"
+
             - name: OLLAMA_URL
-              #value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"
-              value: "https://estrella-predependent-shiftingly.ngrok-free.dev/api/generate"
+              valueFrom:
+                secretKeyRef:
+                  name: ollama-secret
+                  key: OLLAMA_URL
+
             - name: OLLAMA_USER
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: ollama-secret
+                  key: OLLAMA_USER
+
             - name: OLLAMA_PASS
-              value: "SuperSafe123"
+              valueFrom:
+                secretKeyRef:
+                  name: ollama-secret
+                  key: OLLAMA_PASS
 
 ---
 apiVersion: v1

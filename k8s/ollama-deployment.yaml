@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,12 +18,17 @@ spec:
           image: ollama/ollama:latest
           ports:
             - containerPort: 11434
-          env:
-            - name: OLLAMA_USER
-              value: "admin"
-            - name: OLLAMA_PASS
-              value: "SuperSafe123"
----
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          resources:
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+      volumes:
+        - name: ollama-data
+          emptyDir: {}
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -31,5 +37,7 @@ spec:
   selector:
     app: ollama
   ports:
-    - port: 11434
+    - protocol: TCP
+      port: 11434
       targetPort: 11434
+  type: ClusterIP
