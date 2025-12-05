@@ -141,6 +141,8 @@ pipeline {
                 kubectl apply -f k8s/backend-deployment.yaml
                 kubectl apply -f k8s/frontend-deployment.yaml
                 kubectl apply -f k8s/supervisor-deployment.yaml
+                kubectl apply -f k8s/backend-hpa.yaml
+
                 """
             }
         }

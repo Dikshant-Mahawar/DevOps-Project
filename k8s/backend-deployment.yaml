@@ -15,9 +15,14 @@ spec:
     spec:
       containers:
         - name: backend
-          image: dikshant012/salon-backend:latest
+          image: harsh4710/salon-backend:latest
           ports:
             - containerPort: 8000
+          resources:
+            requests:
+              cpu: "100m"
+            limits:
+              cpu: "500m"
           env:
 
             #value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: salon-frontend
-        image: dikshant012/salon-frontend:latest
+        image: harsh4710/salon-frontend:v5
         ports:
         - containerPort: 8501
 ---
