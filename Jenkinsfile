@@ -38,7 +38,7 @@ pipeline {
                 docker run --rm -i hadolint/hadolint < backend/Dockerfile  || true
                 docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
                 docker run --rm -i hadolint/hadolint < supervisor/Dockerfile || true
-                docker run --rm -i hadolint/hadolint < ollama/Dockerfile || true
+        
                 """
             }
         }
@@ -122,11 +122,10 @@ pipeline {
                 kubectl apply -f k8s/frontend-deployment.yaml
 
                 # Supervisor Dashboard
-                kubectl apply -f k8s/supervisor-deployment.yaml
+                kubectl apply -f k8s/supervisor-dashboard.yaml
 
                 # Ollama LLM Deployment (AI Layer)
                 kubectl apply -f k8s/ollama-deployment.yaml
-                kubectl apply -f k8s/ollama-service.yaml
 
                 echo "✅ All components deployed successfully!"
                 """
