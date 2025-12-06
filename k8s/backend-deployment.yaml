@@ -18,23 +18,32 @@ spec:
           image: harsh4710/salon-backend:latest
           ports:
             - containerPort: 8000
+
           resources:
             requests:
               cpu: "100m"
             limits:
               cpu: "500m"
+
           env:
 
-            #value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"
-            #value: "https://estrella-predependent-shiftingly.ngrok-free.dev/api/generate"
-            #value: "http://ollama-service:11434/api/generate"
-
+            # ================================
+            # 💡 Ollama URL Configuration
+            # ================================
+            # INTERNAL Kubernetes Ollama (Recommended)
             - name: OLLAMA_URL
-              valueFrom:
-                secretKeyRef:
-                  name: ollama-secret
-                  key: OLLAMA_URL
+              value: "http://ollama-service:11434/api/generate"
 
+            # EXTERNAL ngrok Ollama (Use only if needed)
+            # - name: OLLAMA_URL
+            #   value: "https://gigantesque-apolonia-agrobiologic.ngrok-free.dev/api/generate"
+
+            # - name: OLLAMA_URL
+            #   value: "https://estrella-predependent-shiftingly.ngrok-free.dev/api/generate"
+
+            # ================================
+            # 🔐 Sensitive credentials
+            # ================================
             - name: OLLAMA_USER
               valueFrom:
                 secretKeyRef:
