@@ -1,4 +1,16 @@
+minikube start
+
 kubectl create secret generic ollama-secret \
   --from-literal=OLLAMA_USER=admin \
   --from-literal=OLLAMA_PASS=SuperSafe123 \
-  --from-literal=OLLAMA_URL=https://your-ngrok-url.ngrok-free.app/api/generate
+
+
+--kubectl apply -f k8s/ollama-deployment.yaml\
+--kubectl apply -f k8s/backend-deployment.yaml\
+--kubectl apply -f k8s/frontend-deployment.yaml\
+--kubectl apply -f k8s/supervisor-dashboard.yaml\
+--kubectl apply -f k8s/backend-hpa.yaml\
+
+
+minikube service frontend-service\
+minikube service supervisor-service\
