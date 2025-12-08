@@ -48,17 +48,15 @@ pipeline {
         stage('Security Scan - Trivy (Config Scan)') {
             steps {
                 sh """
-                echo '🔍 Running Trivy config scan on project...'
+                echo '🔍 Running Trivy config scan on project YAML files...'
 
-                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/backend   || true
-                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/frontend  || true
-                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/supervisor || true
+                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/k8s || true
                 """
             }
         }
 
         /* ---------------------------------------------------------
-         * 4️⃣ Bandit — Python SAST Security Scan
+         * 4️⃣ Bandit — Python SAST on Backend Code
          * --------------------------------------------------------- */
         stage('Security Scan - Python Code (Bandit)') {
             steps {
@@ -77,53 +75,30 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 5️⃣ Docker Build & Push (Backend + Frontend) — OPTIONAL
+         * 5️⃣ Docker Build & Push (Backend, Frontend, Supervisor)
          * --------------------------------------------------------- */
 
-        // stage('Build Backend Image') {
-        //     steps {
-        //         sh "docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest -f backend/Dockerfile ."
-        //     }
-        // }
-
-        // stage('Build Frontend Image') {
-        //     steps {
-        //         sh "docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest -f frontend/Dockerfile ."
-        //     }
-        // }
-
-        // stage('Push Backend + Frontend Images') {
-        //     steps {
-        //         withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
-        //                 usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-        //             sh """
-        //             echo "$PASS" | docker login -u "$USER" --password-stdin
-        //             docker push ${env.DOCKERHUB_USERNAME}/salon-backend:latest
-        //             docker push ${env.DOCKERHUB_USERNAME}/salon-frontend:latest
-        //             """
-        //         }
-        //     }
-        // }
-
-        /* ---------------------------------------------------------
-         * 6️⃣ Supervisor Dashboard — Build & Push
-         * --------------------------------------------------------- */
-        stage('Build Supervisor Image') {
+        stage('Build Images') {
             steps {
                 sh """
-                echo '🛠 Building Supervisor Dashboard image...'
-                docker build -t ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest \
-                -f supervisor/Dockerfile supervisor/
+                echo '🛠 Building Docker images...'
+
+                docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest   -f backend/Dockerfile backend/
+                docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest  -f frontend/Dockerfile frontend/
+                docker build -t ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest -f supervisor/Dockerfile supervisor/
                 """
             }
         }
 
-        stage('Push Supervisor Image') {
+        stage('Push Images') {
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
                         usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh """
                     echo "$PASS" | docker login -u "$USER" --password-stdin
+
+                    docker push ${env.DOCKERHUB_USERNAME}/salon-backend:latest
+                    docker push ${env.DOCKERHUB_USERNAME}/salon-frontend:latest
                     docker push ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest
                     """
                 }
@@ -131,18 +106,28 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 7️⃣ Kubernetes Deployment (Backend + Frontend + Supervisor)
+         * 6️⃣ Deploy to Kubernetes (Backend + Frontend + Supervisor + HPA + Ollama)
          * --------------------------------------------------------- */
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
                 echo '🚀 Deploying application to Kubernetes...'
 
+                # Backend
                 kubectl apply -f k8s/backend-deployment.yaml
-                kubectl apply -f k8s/frontend-deployment.yaml
-                kubectl apply -f k8s/supervisor-deployment.yaml
                 kubectl apply -f k8s/backend-hpa.yaml
 
+                # Frontend
+                kubectl apply -f k8s/frontend-deployment.yaml
+
+                # Supervisor Dashboard
+                kubectl apply -f k8s/supervisor-deployment.yaml
+
+                # Ollama LLM Deployment (AI Layer)
+                kubectl apply -f k8s/ollama-deployment.yaml
+                kubectl apply -f k8s/ollama-service.yaml
+
+                echo "✅ All components deployed successfully!"
                 """
             }
         }
