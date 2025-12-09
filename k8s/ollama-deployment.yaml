@@ -1,3 +1,27 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ollama-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/ollama   # stored on minikube node
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,20 +39,20 @@ spec:
       containers:
         - name: ollama
           image: ollama/ollama:latest
+          
           command:
             - sh
             - -c
             - |
-              # Start Ollama server in background
+              echo "Starting Ollama server..."
               ollama serve &
 
-              # Wait a few seconds for server to start
+              # Wait for server to become ready
               sleep 10
 
-              # Pull model in background so container doesn't block startup
-              ollama pull llama3.2 &
+              echo "Pulling model llama3.2 if not present..."
+              ollama list | grep -q 'llama3.2' || ollama pull llama3.2
 
-              # Bring server to foreground so pod stays alive
               wait
 
           ports:
@@ -39,7 +63,7 @@ spec:
               value: "0.0.0.0"
 
           volumeMounts:
-            - name: ollama-data
+            - name: ollama-storage
               mountPath: /root/.ollama
 
           resources:
@@ -51,8 +75,9 @@ spec:
               memory: "6Gi"
 
       volumes:
-        - name: ollama-data
-          emptyDir: {}
+        - name: ollama-storage
+          persistentVolumeClaim:
+            claimName: ollama-pvc
 
 ---
 apiVersion: v1
@@ -65,3 +90,4 @@ spec:
   ports:
     - port: 11434
       targetPort: 11434
+      protocol: TCP
