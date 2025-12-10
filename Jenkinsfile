@@ -6,7 +6,7 @@ pipeline {
         GITHUB_CREDENTIALS    = 'github-credentials-id'
         DOCKERHUB_USERNAME    = 'harsh4710'
 
-        // kubeconfig for Minikube access
+        // kubeconfig for Minikube
         KUBECONFIG = "/home/harsh-d/.kube/config"
     }
 
@@ -33,36 +33,36 @@ pipeline {
         stage('Security Scan - Dockerfiles (Hadolint)') {
             steps {
                 sh """
-                echo '🔍 Running Hadolint security scan on Dockerfiles...'
+                echo '🔍 Running Hadolint security scan...'
 
                 docker run --rm -i hadolint/hadolint < backend/Dockerfile  || true
                 docker run --rm -i hadolint/hadolint < frontend/Dockerfile || true
                 docker run --rm -i hadolint/hadolint < supervisor/Dockerfile || true
-        
                 """
             }
         }
 
         /* ---------------------------------------------------------
-         * 3️⃣ Trivy — Config Scan
+         * 3️⃣ Trivy — YAML Config Scan
          * --------------------------------------------------------- */
         stage('Security Scan - Trivy (Config Scan)') {
             steps {
                 sh """
-                echo '🔍 Running Trivy config scan on project YAML files...'
+                echo '🔍 Running Trivy config scan on Kubernetes files...'
 
-                docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:latest config /project/k8s || true
+                docker run --rm -v ${env.WORKSPACE}:/project \
+                    aquasec/trivy:latest config /project/k8s || true
                 """
             }
         }
 
         /* ---------------------------------------------------------
-         * 4️⃣ Bandit — Python SAST on Backend Code
+         * 4️⃣ Bandit — Python Backend Scan
          * --------------------------------------------------------- */
         stage('Security Scan - Python Code (Bandit)') {
             steps {
                 sh """
-                echo '🔍 Running Bandit security scan on backend Python code...'
+                echo '🔍 Running Bandit SAST scan...'
 
                 python3 -m venv bandit-venv
                 . bandit-venv/bin/activate
@@ -76,9 +76,8 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 5️⃣ Docker Build & Push (Backend, Frontend, Supervisor)
+         * 5️⃣ Docker Build
          * --------------------------------------------------------- */
-
         stage('Build Images') {
             steps {
                 sh """
@@ -91,6 +90,9 @@ pipeline {
             }
         }
 
+        /* ---------------------------------------------------------
+         * 6️⃣ Docker Push
+         * --------------------------------------------------------- */
         stage('Push Images') {
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
@@ -107,14 +109,14 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 6️⃣ Deploy to Kubernetes (Backend + Frontend + Supervisor + HPA + Ollama)
+         * 7️⃣ Deploy to Kubernetes
          * --------------------------------------------------------- */
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                echo '🚀 Deploying application to Kubernetes...'
+                echo '🚀 Deploying microservices to Kubernetes...'
 
-                # Backend
+                # Backend + Autoscaler
                 kubectl apply -f k8s/backend-deployment.yaml
                 kubectl apply -f k8s/backend-hpa.yaml
 
@@ -124,10 +126,43 @@ pipeline {
                 # Supervisor Dashboard
                 kubectl apply -f k8s/supervisor-dashboard.yaml
 
-                # Ollama LLM Deployment (AI Layer)
+                # Ollama Deployment
                 kubectl apply -f k8s/ollama-deployment.yaml
 
-                echo "✅ All components deployed successfully!"
+                echo "✅ Kubernetes deployment complete!"
+                """
+            }
+        }
+
+        /* ---------------------------------------------------------
+         * 8️⃣ Start ELK Stack using Docker Compose
+         * --------------------------------------------------------- */
+        stage('Start ELK Stack') {
+            steps {
+                sh """
+                echo '📊 Starting ELK Stack using Docker Compose...'
+
+                cd elk
+                docker compose down || true
+                docker compose up -d
+
+                echo '✅ ELK stack is up and running!'
+                """
+            }
+        }
+
+        /* ---------------------------------------------------------
+         * 9️⃣ Deploy Filebeat to Kubernetes with Ansible
+         * --------------------------------------------------------- */
+        stage('Deploy Filebeat via Ansible') {
+            steps {
+                sh """
+                echo '📦 Running Ansible playbook to deploy Filebeat...'
+
+                cd ansible
+                ansible-playbook -i inventory deploy-filebeat.yml
+
+                echo '✅ Filebeat deployed with Ansible!'
                 """
             }
         }
