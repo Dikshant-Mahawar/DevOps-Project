@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from streamlit_autorefresh import st_autorefresh
 import os
-
+#test
 # Allows working both in docker-compose & locally
 # BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8501")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://192.168.49.2:30799")
