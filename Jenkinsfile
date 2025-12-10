@@ -75,64 +75,64 @@ pipeline {
             }
         }
 
-        /* ---------------------------------------------------------
-         * 5️⃣ Docker Build
-         * --------------------------------------------------------- */
-        stage('Build Images') {
-            steps {
-                sh """
-                echo '🛠 Building Docker images...'
+        // /* ---------------------------------------------------------
+        //  * 5️⃣ Docker Build
+        //  * --------------------------------------------------------- */
+        // stage('Build Images') {
+        //     steps {
+        //         sh """
+        //         echo '🛠 Building Docker images...'
 
-                docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest   -f backend/Dockerfile backend/
-                docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest  -f frontend/Dockerfile frontend/
-                docker build -t ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest -f supervisor/Dockerfile supervisor/
-                """
-            }
-        }
+        //         docker build -t ${env.DOCKERHUB_USERNAME}/salon-backend:latest   -f backend/Dockerfile backend/
+        //         docker build -t ${env.DOCKERHUB_USERNAME}/salon-frontend:latest  -f frontend/Dockerfile frontend/
+        //         docker build -t ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest -f supervisor/Dockerfile supervisor/
+        //         """
+        //     }
+        // }
 
-        /* ---------------------------------------------------------
-         * 6️⃣ Docker Push
-         * --------------------------------------------------------- */
-        stage('Push Images') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
-                        usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                    echo "$PASS" | docker login -u "$USER" --password-stdin
+        // /* ---------------------------------------------------------
+        //  * 6️⃣ Docker Push
+        //  * --------------------------------------------------------- */
+        // stage('Push Images') {
+        //     steps {
+        //         withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS,
+        //                 usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+        //             sh """
+        //             echo "$PASS" | docker login -u "$USER" --password-stdin
 
-                    docker push ${env.DOCKERHUB_USERNAME}/salon-backend:latest
-                    docker push ${env.DOCKERHUB_USERNAME}/salon-frontend:latest
-                    docker push ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest
-                    """
-                }
-            }
-        }
+        //             docker push ${env.DOCKERHUB_USERNAME}/salon-backend:latest
+        //             docker push ${env.DOCKERHUB_USERNAME}/salon-frontend:latest
+        //             docker push ${env.DOCKERHUB_USERNAME}/supervisor-dashboard:latest
+        //             """
+        //         }
+        //     }
+        // }
 
-        /* ---------------------------------------------------------
-         * 7️⃣ Deploy to Kubernetes
-         * --------------------------------------------------------- */
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh """
-                echo '🚀 Deploying microservices to Kubernetes...'
+        // /* ---------------------------------------------------------
+        //  * 7️⃣ Deploy to Kubernetes
+        //  * --------------------------------------------------------- */
+        // stage('Deploy to Kubernetes') {
+        //     steps {
+        //         sh """
+        //         echo '🚀 Deploying microservices to Kubernetes...'
 
-                # Backend + Autoscaler
-                kubectl apply -f k8s/backend-deployment.yaml
-                kubectl apply -f k8s/backend-hpa.yaml
+        //         # Backend + Autoscaler
+        //         kubectl apply -f k8s/backend-deployment.yaml
+        //         kubectl apply -f k8s/backend-hpa.yaml
 
-                # Frontend
-                kubectl apply -f k8s/frontend-deployment.yaml
+        //         # Frontend
+        //         kubectl apply -f k8s/frontend-deployment.yaml
 
-                # Supervisor Dashboard
-                kubectl apply -f k8s/supervisor-dashboard.yaml
+        //         # Supervisor Dashboard
+        //         kubectl apply -f k8s/supervisor-dashboard.yaml
 
-                # Ollama Deployment
-                kubectl apply -f k8s/ollama-deployment.yaml
+        //         # Ollama Deployment
+        //         kubectl apply -f k8s/ollama-deployment.yaml
 
-                echo "✅ Kubernetes deployment complete!"
-                """
-            }
-        }
+        //         echo "✅ Kubernetes deployment complete!"
+        //         """
+        //     }
+        // }
 
         /* ---------------------------------------------------------
          * 8️⃣ Start ELK Stack using Docker Compose
