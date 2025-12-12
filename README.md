@@ -85,27 +85,6 @@ Supervisor Dashboard (Monitoring & Escalations)
 
 ---
 
-## How to Run (Demo Steps)
-
-```bash
-# 1. Start Minikube
-minikube start
-
-# 2. Deploy ELK Stack (if not using Docker Compose)
-kubectl apply -f k8s/elk/
-
-# 3. Deploy Filebeat as DaemonSet
-kubectl apply -f k8s/filebeat/
-
-# 4. Deploy Ollama + Backend + Frontends
-kubectl apply -f k8s/
-
-# 5. Access Services
-minikube service client-dashboard --url
-minikube service supervisor-dashboard --url
-minikube service kibana --url
-
-'''
 CI/CD Pipeline (Jenkins)
 
 Triggers on every Git push
@@ -136,6 +115,31 @@ Real-time AIOps observability using ELK
 Scalability, resilience, and maintainability
 
 A complete blueprint for deploying intelligent applications in production.
+
+
+---
+## How to Run (Demo Steps)
+
+```bash
+# 1. Start Minikube
+minikube start
+
+# 2. Deploy ELK Stack (if not using Docker Compose)
+kubectl apply -f k8s/elk/
+
+# 3. Deploy Filebeat as DaemonSet
+kubectl apply -f k8s/filebeat/
+
+# 4. Deploy Ollama + Backend + Frontends
+kubectl apply -f k8s/
+
+# 5. Access Services
+minikube service client-dashboard --url
+minikube service supervisor-dashboard --url
+minikube service kibana --url
+
+---
+
 
 minikube start
 
