@@ -137,34 +137,34 @@ pipeline {
         /* ---------------------------------------------------------
          * 8️⃣ Start ELK Stack using Docker Compose
          * --------------------------------------------------------- */
-        stage('Start ELK Stack') {
-            steps {
-                sh """
-                echo '📊 Starting ELK Stack using Docker Compose...'
+        // stage('Start ELK Stack') {
+        //     steps {
+        //         sh """
+        //         echo '📊 Starting ELK Stack using Docker Compose...'
 
-                cd elk
-                docker compose down || true
-                docker compose up -d
+        //         cd elk
+        //         docker compose down || true
+        //         docker compose up -d
 
-                echo '✅ ELK stack is up and running!'
-                """
-            }
-        }
+        //         echo '✅ ELK stack is up and running!'
+        //         """
+        //     }
+        // }
 
-        /* ---------------------------------------------------------
-         * 9️⃣ Deploy Filebeat to Kubernetes with Ansible
-         * --------------------------------------------------------- */
-        stage('Deploy Filebeat via Ansible') {
-            steps {
-                sh """
-                echo '📦 Running Ansible playbook to deploy Filebeat...'
+        // /* ---------------------------------------------------------
+        //  * 9️⃣ Deploy Filebeat to Kubernetes with Ansible
+        //  * --------------------------------------------------------- */
+        // stage('Deploy Filebeat via Ansible') {
+        //     steps {
+        //         sh """
+        //         echo '📦 Running Ansible playbook to deploy Filebeat...'
 
-                cd ansible
-                ansible-playbook -i inventory deploy-filebeat.yml
+        //         cd ansible
+        //         ansible-playbook -i inventory deploy-filebeat.yml
 
-                echo '✅ Filebeat deployed with Ansible!'
-                """
-            }
-        }
+        //         echo '✅ Filebeat deployed with Ansible!'
+        //         """
+        //     }
+        // }
     }
 }
